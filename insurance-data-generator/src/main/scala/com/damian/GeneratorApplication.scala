@@ -6,18 +6,19 @@ import akka.http.scaladsl.Http
 import com.damian.api.GeneratorController
 import com.damian.messaging.InsuranceRecordProducer
 import com.damian.service.{DatasetDownloader, InsuranceDataGenerator}
-
-import scala.concurrent.ExecutionContext
+import com.typesafe.config.ConfigFactory
 
 @main def run(): Unit = {
   given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "InsuranceSystem")
-  given ExecutionContext = system.executionContext
+
+  val config = ConfigFactory.load()
+  val host = config.getString("server.host")
+  val port = config.getInt("server.port")
 
   val generator = InsuranceDataGenerator(DatasetDownloader(), InsuranceRecordProducer())
   val controller = GeneratorController(generator)
   generator.startStream()
 
-  //TODO: to change, server address should be modifiable by ENV
-  Http().newServerAt("0.0.0.0", 8080).bind(controller.routes)
+  Http().newServerAt(host, port).bind(controller.routes)
 }
 

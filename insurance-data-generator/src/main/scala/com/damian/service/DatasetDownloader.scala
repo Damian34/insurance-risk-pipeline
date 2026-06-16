@@ -15,9 +15,7 @@ class DatasetDownloader {
    * https://www.kaggle.com/datasets/ahluwaliasaksham/car-insurance-fraud-detection-dataset?utm_source=chatgpt.com
    */
   private val log = LoggerFactory.getLogger(getClass)
-
   private val DATA_SET = "ahluwaliasaksham/car-insurance-fraud-detection-dataset"
-
   private val DATA_SET_FILE_NAME = "car_insurance_fraud_dataset.csv"
 
   def downloadFile(): Path = {

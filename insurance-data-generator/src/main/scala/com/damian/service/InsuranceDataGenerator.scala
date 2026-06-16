@@ -21,7 +21,7 @@ class InsuranceDataGenerator(
   def startStream(): String =
     if streamSemaphore.tryAcquire() then
       stream()
-      "Propagation started.".tap(log.info)
+      "Propagation start.".tap(log.info)
     else
       "Propagation already running!".tap(log.info)
 

@@ -8,7 +8,8 @@ class InsuranceDataReader(downloader: DatasetDownloader) extends AutoCloseable {
   private val reader = CSVReader.open(csvPath.toFile)
 
   def records(): Iterator[InsuranceRecord] = 
-    reader.iteratorWithHeaders
+    reader
+      .iteratorWithHeaders
       .map(row => InsuranceRecord.of(row))
 
   override def close(): Unit = reader.close()
