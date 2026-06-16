@@ -1,5 +1,6 @@
-package com.damian
+package com.damian.service
 
+import com.damian.exception.DatasetDownloadException
 import org.slf4j.LoggerFactory
 
 import java.net.URI
