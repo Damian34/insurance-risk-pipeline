@@ -8,6 +8,10 @@ lazy val root = (project in file("."))
 
 lazy val generator = (project in file("insurance-data-generator"))
   .settings(
-    name := "insurance-data-generator"
+    name := "insurance-data-generator",
+      libraryDependencies ++= Seq(
+      "org.slf4j"      % "slf4j-api"       % "2.0.18",
+      "ch.qos.logback" % "logback-classic" % "1.5.34"
+    )
   )
 
