@@ -29,7 +29,7 @@ class InsuranceDataGenerator(
     val reader = InsuranceDataReader(downloader)
     val streamFuture = Source.fromIterator(() => reader.records())
       // sleep between sends in order to simulate real system output
-      .throttle(1, FiniteDuration(Random.between(50, 200), "ms"))
+      .throttle(1, FiniteDuration(Random.between(50, 300), "ms"))
       .runWith(Sink.foreach(r => producer.produce(r)))
     streamFuture
       .andThen(_ => reader.close())
