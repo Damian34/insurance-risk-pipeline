@@ -3,7 +3,7 @@ in progress..
 
 
 ## Stack
-- Scala 3.8.4 (JDK 25)
+- Scala 3.8.4 (on JDK 25)
 - RabbitMQ
 - Akka HTTP/Streams
 

@@ -13,12 +13,16 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 }
 
 lazy val root = (project in file("."))
-  .aggregate(shared, generator)
+  .aggregate(shared, generator, processingApi)
 
 lazy val shared = (project in file("shared"))
   .settings(
     name := "shared",
-    assembly / skip := true
+    assembly / skip := true,
+    libraryDependencies ++= Seq(
+      "com.rabbitmq" % "amqp-client" % "5.31.0",
+      "com.typesafe" % "config"      % "1.4.9"
+    )
   )
 
 lazy val generator = (project in file("data-generator"))
@@ -35,9 +39,20 @@ lazy val generator = (project in file("data-generator"))
       "com.typesafe.akka" %% "akka-http"   % "10.5.3",
       "com.typesafe.akka" %% "akka-stream" % "2.8.8",
       "com.typesafe.akka" %% "akka-actor-typed" % "2.8.8",
-      "com.rabbitmq" % "amqp-client" % "5.31.0",
       "io.circe" %% "circe-core"    % "0.14.15",
       "io.circe" %% "circe-generic" % "0.14.15"
     )
   )
 
+lazy val processingApi = (project in file("processing/api"))
+  .dependsOn(shared)
+  .enablePlugins(AssemblyPlugin)
+  .settings(
+    name := "processing-api",
+    assembly / mainClass    := Some("com.damian.run"),
+    assembly / assemblyJarName := "app.jar",
+    libraryDependencies ++= Seq(
+      "org.slf4j"      % "slf4j-api"       % "2.0.18",
+      "ch.qos.logback" % "logback-classic" % "1.5.34"
+    )
+  )
