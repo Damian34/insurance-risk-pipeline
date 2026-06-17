@@ -9,7 +9,6 @@ import java.nio.file.{Files, Path, Paths}
 import java.util.zip.ZipInputStream
 import scala.util.Using
 
-
 class DatasetDownloader {
   /**
    * https://www.kaggle.com/datasets/ahluwaliasaksham/car-insurance-fraud-detection-dataset?utm_source=chatgpt.com
