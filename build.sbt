@@ -15,17 +15,17 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 lazy val root = (project in file("."))
   .aggregate(shared, generator)
 
-lazy val shared = (project in file("insurance-shared"))
+lazy val shared = (project in file("shared"))
   .settings(
-    name := "insurance-shared",
+    name := "shared",
     assembly / skip := true
   )
 
-lazy val generator = (project in file("insurance-data-generator"))
+lazy val generator = (project in file("data-generator"))
   .dependsOn(shared)
   .enablePlugins(AssemblyPlugin)
   .settings(
-    name := "insurance-data-generator",
+    name := "data-generator",
     assembly / mainClass    := Some("com.damian.run"),
     assembly / assemblyJarName := "app.jar",
     libraryDependencies ++= Seq(
