@@ -4,6 +4,7 @@ networks:
 volumes:
   rabbitmq_data:
   generator_data:
+  insurance_db:
 
 services:
   insurance-data-generator:
@@ -24,6 +25,26 @@ services:
       - api-network
     volumes:
       - generator_data:/app/data
+
+  insurance-db:
+    image: postgres:18.0-alpine
+    container_name: insurance-db
+    restart: always
+    environment:
+      POSTGRES_DB: insurance-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - api-network
+    volumes:
+      - insurance_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insurance-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:4.3.2-management

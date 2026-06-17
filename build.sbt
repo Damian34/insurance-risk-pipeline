@@ -53,6 +53,13 @@ lazy val processingApi = (project in file("processing/api"))
     assembly / assemblyJarName := "app.jar",
     libraryDependencies ++= Seq(
       "org.slf4j"      % "slf4j-api"       % "2.0.18",
-      "ch.qos.logback" % "logback-classic" % "1.5.34"
+      "ch.qos.logback" % "logback-classic" % "1.5.34",
+      "io.circe" %% "circe-core"    % "0.14.15",
+      "io.circe" %% "circe-generic" % "0.14.15",
+      "io.circe" %% "circe-parser" % "0.14.15",
+      "org.flywaydb" % "flyway-core" % "12.8.1",
+      "org.flywaydb" % "flyway-database-postgresql" % "12.8.1",
+      "org.postgresql" % "postgresql" % "42.7.11",
+      "com.zaxxer" % "HikariCP" % "7.1.0"
     )
   )
