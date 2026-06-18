@@ -12,7 +12,7 @@ services:
     container_name: insurance-data-generator
     restart: always
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -25,6 +25,47 @@ services:
       - api-network
     volumes:
       - generator_data:/app/data
+
+  spark-job:
+    image: apache/spark:3.5.0
+    depends_on:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ./processing/spark-job/target/scala-2.12/app.jar:/app/app.jar
+    command: >
+      /opt/spark/bin/spark-submit
+      --class com.damian.JobApplication
+      --master spark://spark-master:7077
+      /app/app.jar
+    networks:
+      - api-network
+
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MODE: master
+    ports:
+      - "8090:8080"  # Spark UI
+      - "7077:7077"  # Spark master port
+    networks:
+      - api-network
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark-worker
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - api-network
 
   insurance-db:
     image: postgres:18.0-alpine

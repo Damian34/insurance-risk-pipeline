@@ -13,7 +13,7 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 }
 
 lazy val root = (project in file("."))
-  .aggregate(shared, generator, processingApi)
+  .aggregate(shared, generator, processingApi, sparkJob)
 
 lazy val shared = (project in file("shared"))
   .settings(
@@ -62,4 +62,23 @@ lazy val processingApi = (project in file("processing/api"))
       "org.postgresql" % "postgresql" % "42.7.11",
       "com.zaxxer" % "HikariCP" % "7.1.0"
     )
+  )
+
+lazy val sparkJob = (project in file("processing/spark-job"))
+  .enablePlugins(AssemblyPlugin)
+  .settings(
+    scalaVersion := "2.12.18",
+    name := "spark-job",
+    assembly / mainClass    := Some("com.damian.run"),
+    assembly / assemblyJarName := "app.jar",
+    libraryDependencies ++= Seq(
+      "org.slf4j"      % "slf4j-api"       % "2.0.18",
+      "ch.qos.logback" % "logback-classic" % "1.5.34",
+      // spark to docker with cluster run
+//      "org.apache.spark" %% "spark-core" % "3.5.0" % "provided",
+//      "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided"
+      // spark to local run
+      "org.apache.spark" %% "spark-core" % "3.5.0",
+      "org.apache.spark" %% "spark-sql" % "3.5.0"
+    ),
   )

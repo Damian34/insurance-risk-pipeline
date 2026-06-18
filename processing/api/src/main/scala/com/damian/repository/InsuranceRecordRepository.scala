@@ -6,11 +6,7 @@ import com.damian.model.InsuranceRecord
 import scala.util.Using
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
-// TODO zapisc gdzie policyId jest primary keyem, pomijać czy zapisywć?
-//  PostgreSQL, changesety?
-
 class InsuranceRecordRepository(properties: DatabaseProperties) {
-
 
   private val dataSource: HikariDataSource =
     val config = HikariConfig()

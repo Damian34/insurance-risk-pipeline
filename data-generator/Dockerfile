@@ -1,5 +1,5 @@
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY target/scala-*/*.jar app.jar
-EXPOSE 8081
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

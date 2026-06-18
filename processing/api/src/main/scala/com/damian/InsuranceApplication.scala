@@ -16,5 +16,7 @@ import com.typesafe.config.ConfigFactory
   val recordRepository = InsuranceRecordRepository(dbProperties)
   val consumer = InsuranceRecordConsumer(rabbitConfig, recordRepository)
   consumer.start()
-  Thread.currentThread().join() // blokuje
+  Thread.currentThread().join() // blocked
+  
+  //TODO: add spark scheduling instant of thread blocking
 }
