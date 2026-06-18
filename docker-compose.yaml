@@ -7,7 +7,7 @@ volumes:
   insurance_db:
 
 services:
-  insurance-data-generator:
+  data-generator:
     build: ./insurance-data-generator
     container_name: insurance-data-generator
     restart: always

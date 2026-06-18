@@ -20,7 +20,7 @@ lazy val shared = (project in file("shared"))
     name := "shared",
     assembly / skip := true,
     libraryDependencies ++= Seq(
-      "com.rabbitmq" % "amqp-client" % "5.31.0",
+      "com.rabbitmq" % "amqp-client" % "5.32.0",
       "com.typesafe" % "config"      % "1.4.9"
     )
   )
@@ -57,7 +57,7 @@ lazy val processingApi = (project in file("processing/api"))
       "io.circe" %% "circe-core"    % "0.14.15",
       "io.circe" %% "circe-generic" % "0.14.15",
       "io.circe" %% "circe-parser" % "0.14.15",
-      "org.flywaydb" % "flyway-core" % "12.8.1",
+      "org.flywaydb" % "flyway-core" % "12.9.0",
       "org.flywaydb" % "flyway-database-postgresql" % "12.8.1",
       "org.postgresql" % "postgresql" % "42.7.11",
       "com.zaxxer" % "HikariCP" % "7.1.0"
