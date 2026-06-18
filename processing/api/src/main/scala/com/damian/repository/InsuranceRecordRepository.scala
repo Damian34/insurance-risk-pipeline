@@ -80,5 +80,5 @@ class InsuranceRecordRepository(properties: DatabaseProperties) {
       stmt.setDouble(23, record.totalClaimAmount)
       stmt.setBoolean(24, record.fraudReported)
       stmt.executeUpdate()
-    }
+    }.get
 }
