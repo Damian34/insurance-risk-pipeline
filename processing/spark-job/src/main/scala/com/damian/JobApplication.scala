@@ -1,18 +1,21 @@
 package com.damian
 
-import org.apache.spark.sql.{SparkSession, DataFrame}
-import org.apache.spark.sql.functions._
+import com.damian.config.properties.DatabaseProperties
+import org.apache.spark.sql.SparkSession
+import com.typesafe.config.ConfigFactory
+import com.damian.service.{RiskStatisticsJob, StatisticsCalculator}
+import org.slf4j.LoggerFactory
 
 /**
  * To local run set:
  * 1. in JobApplication set:
- * .master("local[*]") 
+ * .master("local[*]")
  * 2. in build.sbt change to:
  * "org.apache.spark" %% "spark-core" % "3.5.0",
  * "org.apache.spark" %% "spark-sql" % "3.5.0"
  * 3. in IntelliJ run config add VM options:
  * --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
- * 
+ *
  * To docker run:
  * 1. in JobApplication set:
  * .master("spark://spark-master:7077")
@@ -22,45 +25,25 @@ import org.apache.spark.sql.functions._
  * 3. Run spark-job in docker-compose.yaml
  */
 object JobApplication {
+  private val log = LoggerFactory.getLogger(getClass)
+
   def main(args: Array[String]): Unit = {
     val spark = SparkSession.builder()
-      .appName("InsuranceWorker")
-      .master("local[*]")
-      //.master("spark://spark-master:7077")
+      .appName("InsuranceJob")
+      //.master("local[*]")
+      .master("spark://spark-master:7077")
+      .config("spark.sql.codegen.comments", false)
       .getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
 
-    println("=== START ===")
-    println(s"Spark version: ${spark.version}")
+    val config = ConfigFactory.load()
+    val dbProperties = DatabaseProperties(config)
+    val calculator = new StatisticsCalculator()
+    val job = new RiskStatisticsJob(dbProperties, calculator)
 
-    val df = createData(spark)
-
-    println("=== INPUT ===")
-    df.show(false)
-    df.printSchema()
-
-    val processed = process(df)
-
-    println("=== AFTER PROCESS ===")
-    processed.show(false)
-
-    println("Partitions: " + processed.rdd.getNumPartitions)
-
+    log.info("=== START ===")
+    job.execute(spark)
     spark.stop()
-  }
-
-  def createData(spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
-    Seq(
-      (1, "Anna"),
-      (2, "Bartek"),
-      (4, "Damian")
-    ).toDF("id", "name")
-  }
-
-  def process(df: DataFrame): DataFrame = {
-    df.repartition(2)
-      .withColumn("name_upper", upper(col("name")))
-      .withColumn("is_even", col("id") % 2 === 0)
+    log.info("=== END ===")
   }
 }

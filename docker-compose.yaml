@@ -31,13 +31,20 @@ services:
     depends_on:
       - spark-master
       - spark-worker
+      - insurance-db
+    environment:
+      POSTGRES_URL: jdbc:postgresql://insurance-db:5432/insurance-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - ./processing/spark-job/target/scala-2.12/app.jar:/app/app.jar
     command: >
+      bash -c "
       /opt/spark/bin/spark-submit
       --class com.damian.JobApplication
       --master spark://spark-master:7077
       /app/app.jar
+      "
     networks:
       - api-network
 

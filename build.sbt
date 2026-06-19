@@ -58,7 +58,7 @@ lazy val processingApi = (project in file("processing/api"))
       "io.circe" %% "circe-generic" % "0.14.15",
       "io.circe" %% "circe-parser" % "0.14.15",
       "org.flywaydb" % "flyway-core" % "12.9.0",
-      "org.flywaydb" % "flyway-database-postgresql" % "12.8.1",
+      "org.flywaydb" % "flyway-database-postgresql" % "12.9.0",
       "org.postgresql" % "postgresql" % "42.7.11",
       "com.zaxxer" % "HikariCP" % "7.1.0"
     )
@@ -69,16 +69,18 @@ lazy val sparkJob = (project in file("processing/spark-job"))
   .settings(
     scalaVersion := "2.12.18",
     name := "spark-job",
-    assembly / mainClass    := Some("com.damian.run"),
+    assembly / mainClass    := Some("com.damian.JobApplication"),
     assembly / assemblyJarName := "app.jar",
     libraryDependencies ++= Seq(
+      "com.typesafe" % "config"      % "1.4.9",
       "org.slf4j"      % "slf4j-api"       % "2.0.18",
       "ch.qos.logback" % "logback-classic" % "1.5.34",
+      "org.postgresql" % "postgresql" % "42.7.11",
       // spark to docker with cluster run
-//      "org.apache.spark" %% "spark-core" % "3.5.0" % "provided",
-//      "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided"
+      "org.apache.spark" %% "spark-core" % "3.5.0" % "provided",
+      "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided",
       // spark to local run
-      "org.apache.spark" %% "spark-core" % "3.5.0",
-      "org.apache.spark" %% "spark-sql" % "3.5.0"
-    ),
+//      "org.apache.spark" %% "spark-core" % "3.5.0",
+//      "org.apache.spark" %% "spark-sql" % "3.5.0",
+    )
   )
