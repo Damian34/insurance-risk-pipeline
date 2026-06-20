@@ -17,9 +17,10 @@ class RiskStatisticsJob(
   private val log = LoggerFactory.getLogger(getClass)
 
   def execute(spark: SparkSession): Unit = {
-    val events = readRawEvents(spark)
-    val records = events
-      .withColumn("incident_date", col("incident_date").cast("date"))
+    log.info(s"Reading raw events from: $rawDataPath")
+    val events = spark.read.json(rawDataPath)
+    
+    val records = events.withColumn("incident_date", col("incident_date").cast("date"))
     val latestRecords = latestOccurred(records)
 
     val prepared = latestRecords
@@ -43,12 +44,6 @@ class RiskStatisticsJob(
     val result = ageStats.unionByName(regionStats)
 
     upsertStatisticsToDatabase(result)
-  }
-
-  /** Reads NDJSON from MinIO */
-  private def readRawEvents(spark: SparkSession): DataFrame = {
-    log.info(s"Reading raw events from: $rawDataPath")
-    spark.read.json(rawDataPath)
   }
 
   /** Keep only latest event per policy_id */

@@ -13,29 +13,29 @@ import scala.collection.mutable.ListBuffer
 class InsuranceRecordConsumer(rabbitConfig: RabbitConfig, repository: InsuranceRecordRepository) {
   private val log = LoggerFactory.getLogger(getClass)
   private val channel = rabbitConfig.createChannel()
-  private val scheduler = Executors.newScheduledThreadPool(1)
+  private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
-  private val batchSize = 200
-  private val pollInterval = 2 // seconds
+  private val BATCH_SIZE = 200
+  private val POLL_INTERVAL = 2 // seconds
 
   def start(): Unit = {
     scheduler.scheduleAtFixedRate(
       () => checkAndConsume(),
-      0, pollInterval, TimeUnit.SECONDS
+      0, POLL_INTERVAL, TimeUnit.SECONDS
     )
-    log.info("Consumer started, polling every {}s for batches of {}", pollInterval, batchSize)
+    log.info("Consumer started, polling every {}s for batches of {}", POLL_INTERVAL, BATCH_SIZE)
   }
 
   private def checkAndConsume(): Unit = {
     val queueState = channel.queueDeclarePassive(QueueTopic.InsuranceRecordCreated)
     val available = queueState.getMessageCount
 
-    if (available >= batchSize) {
-      log.info(s"Found $available messages, fetching batch of $batchSize")
-      val batch = fetchBatch(batchSize)
+    if (available >= BATCH_SIZE) {
+      log.info(s"Found $available messages, fetching batch of $BATCH_SIZE")
+      val batch = fetchBatch(BATCH_SIZE)
       processBatch(batch)
     } else {
-      log.debug(s"Only $available messages available, waiting for more (need $batchSize)")
+      log.debug(s"Only $available messages available, waiting for more (need $BATCH_SIZE)")
     }
   }
 
@@ -73,7 +73,6 @@ class InsuranceRecordConsumer(rabbitConfig: RabbitConfig, repository: InsuranceR
   private def processBatch(batch: List[(InsuranceRecordCreatedEvent, Long)]): Unit = {
     try {
       repository.save(batch.map(_._1))
-
       acknowledgeAll(batch)
       log.info(s"Batch of ${batch.size} records saved and acknowledged")
     } catch {

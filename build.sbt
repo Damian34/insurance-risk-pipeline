@@ -7,6 +7,7 @@ ThisBuild / assembly / assemblyMergeStrategy := {
   case PathList("module-info.class")                             => MergeStrategy.discard
   case PathList("META-INF", "versions", _, "module-info.class") => MergeStrategy.discard
   case PathList("META-INF", "io.netty.versions.properties")     => MergeStrategy.first
+  case PathList("META-INF", "okio.kotlin_module")                => MergeStrategy.first
   case x =>
     val old = (assembly / assemblyMergeStrategy).value
     old(x)

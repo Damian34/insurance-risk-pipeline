@@ -1,11 +1,12 @@
 package com.damian
 
-import com.damian.config.properties.{DatabaseProperties, MinioProperties}
+import com.damian.config.properties.{DatabaseProperties, MinioProperties, SparkProperties}
 import com.damian.migration.DatabaseMigration
 import org.apache.spark.sql.SparkSession
 import com.typesafe.config.ConfigFactory
 import com.damian.service.{RiskStatisticsJob, StatisticsCalculator}
 import org.slf4j.LoggerFactory
+import java.util.concurrent.{Executors, Semaphore, TimeUnit}
 
 /**
  * To local run set:
@@ -27,30 +28,26 @@ import org.slf4j.LoggerFactory
  */
 object JobApplication {
   private val log = LoggerFactory.getLogger(getClass)
+  private val scheduler = Executors.newSingleThreadScheduledExecutor()
+  private val jobSemaphore = new Semaphore(1)
+  private val config = ConfigFactory.load()
+  private val sparkProperties = SparkProperties(config)
+  private val dbProperties = DatabaseProperties(config)
+  private val minioProperties = MinioProperties(config)
 
   def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val dbProperties = DatabaseProperties(config)
-    val minioProperties = MinioProperties(config)
     val dbMigration = new DatabaseMigration(dbProperties)
     dbMigration.migrate()
-
-    val sparkUrl =
-      if (config.hasPath("spark.url")) {
-        val url = config.getString("spark.url")
-        s"spark://$url" // "spark://spark-master:7077"
-      } else "local[*]"
-
+    val schedulingEnabled: Boolean = sparkProperties.schedulerEnable
+    val interval: Long = sparkProperties.schedulerInterval
     val spark = SparkSession.builder()
       .appName("InsuranceJob")
-      .master(sparkUrl)
+      .master(sparkProperties.url)
       //.master("local[*]")
       //.master("spark://spark-master:7077")
-
       // Delta Lake
       .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
       .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-
       // MinIO / S3A
       .config("spark.hadoop.fs.s3a.endpoint", minioProperties.endpoint)
       .config("spark.hadoop.fs.s3a.path.style.access", "true")
@@ -61,16 +58,43 @@ object JobApplication {
       .getOrCreate()
     //spark.sparkContext.setLogLevel("ERROR")
 
+    if (schedulingEnabled) {
+      log.info(s"Scheduler enabled. Running every $interval minutes")
+      scheduler.scheduleAtFixedRate(
+        () => safeExecute(spark),
+        0, interval, TimeUnit.MINUTES
+      )
+    } else {
+      log.info("Scheduler disabled. Running job once")
+      safeExecute(spark)
+    }
+    spark.stop()
+  }
+
+  private def safeExecute(spark: SparkSession): Unit = {
+    if (!jobSemaphore.tryAcquire()) {
+      log.warn("Job is already running - skipping this execution")
+      return
+    }
+
+    try {
+      log.info("=== JOB START ===")
+      execute(spark)
+      log.info("=== JOB END ===")
+    } catch {
+      case e: Exception => log.error("Job failed", e)
+    } finally {
+      jobSemaphore.release()
+    }
+  }
+
+  private def execute(spark: SparkSession): Unit = {
     val calculator = new StatisticsCalculator()
     val job = new RiskStatisticsJob(
       dbProperties,
       calculator,
       rawDataPath = s"s3a://${minioProperties.bucket}"
     )
-
-    log.info("=== START ===")
     job.execute(spark)
-    spark.stop()
-    log.info("=== END ===")
   }
 }
