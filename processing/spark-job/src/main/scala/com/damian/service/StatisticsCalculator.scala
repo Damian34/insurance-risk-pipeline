@@ -21,6 +21,8 @@ class StatisticsCalculator {
         expr("percentile_approx(claim_amount, 0.5)").as("median_claim_cost"),
         // median total claim amount (approximate one)
         expr("percentile_approx(total_claim_amount, 0.5)").as("median_total_claim_cost"),
+        // average severity score
+        avg(when(col("incident_severity") === "Total Loss", 1).otherwise(0)).as("avg_severity_score"),
         // percentage of records marked as fraud
         avg("is_fraud").as("fraud_rate"),
 
@@ -38,13 +40,10 @@ class StatisticsCalculator {
   }
 
   private def calculateRiskIndex(): Column = {
-    val lossRatioNorm =
-      least(col("avg_claim_cost") / col("avg_policy_premium"), lit(2.0)) / lit(2.0)
-    val severity =
-      col("median_total_claim_cost") / col("avg_claim_cost")
-    lossRatioNorm * lit(0.5) +
+    val lossNorm = least(col("loss_ratio"), lit(2.0)) / lit(2.0)
+    lossNorm * lit(0.5) +
       col("fraud_rate") * lit(0.3) +
-      severity * lit(0.2)
+      col("avg_severity_score") * lit(0.2)
   }
 
   def concatAgeBucket(): Column = {

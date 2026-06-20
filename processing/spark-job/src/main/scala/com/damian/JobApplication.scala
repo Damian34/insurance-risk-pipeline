@@ -1,6 +1,7 @@
 package com.damian
 
-import com.damian.config.properties.DatabaseProperties
+import com.damian.config.properties.{DatabaseProperties, MinioProperties}
+import com.damian.migration.DatabaseMigration
 import org.apache.spark.sql.SparkSession
 import com.typesafe.config.ConfigFactory
 import com.damian.service.{RiskStatisticsJob, StatisticsCalculator}
@@ -28,18 +29,44 @@ object JobApplication {
   private val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-    val spark = SparkSession.builder()
-      .appName("InsuranceJob")
-      //.master("local[*]")
-      .master("spark://spark-master:7077")
-      .config("spark.sql.codegen.comments", false)
-      .getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
-
     val config = ConfigFactory.load()
     val dbProperties = DatabaseProperties(config)
+    val minioProperties = MinioProperties(config)
+    val dbMigration = new DatabaseMigration(dbProperties)
+    dbMigration.migrate()
+
+    val sparkUrl =
+      if (config.hasPath("spark.url")) {
+        val url = config.getString("spark.url")
+        s"spark://$url" // "spark://spark-master:7077"
+      } else "local[*]"
+
+    val spark = SparkSession.builder()
+      .appName("InsuranceJob")
+      .master(sparkUrl)
+      //.master("local[*]")
+      //.master("spark://spark-master:7077")
+
+      // Delta Lake
+      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+
+      // MinIO / S3A
+      .config("spark.hadoop.fs.s3a.endpoint", minioProperties.endpoint)
+      .config("spark.hadoop.fs.s3a.path.style.access", "true")
+      .config("spark.hadoop.fs.s3a.access.key", minioProperties.accessKey)
+      .config("spark.hadoop.fs.s3a.secret.key", minioProperties.secretKey)
+      .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+      .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider")
+      .getOrCreate()
+    //spark.sparkContext.setLogLevel("ERROR")
+
     val calculator = new StatisticsCalculator()
-    val job = new RiskStatisticsJob(dbProperties, calculator)
+    val job = new RiskStatisticsJob(
+      dbProperties,
+      calculator,
+      rawDataPath = s"s3a://${minioProperties.bucket}"
+    )
 
     log.info("=== START ===")
     job.execute(spark)

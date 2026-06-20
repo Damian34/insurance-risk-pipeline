@@ -7,5 +7,4 @@ class RabbitProperties(config: Config) {
   val port: Int = config.getInt("rabbitmq.port")
   val userName: String = config.getString("rabbitmq.username")
   val password: String = config.getString("rabbitmq.password")
-
 }

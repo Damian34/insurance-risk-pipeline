@@ -57,10 +57,7 @@ lazy val processingApi = (project in file("processing/api"))
       "io.circe" %% "circe-core"    % "0.14.15",
       "io.circe" %% "circe-generic" % "0.14.15",
       "io.circe" %% "circe-parser" % "0.14.15",
-      "org.flywaydb" % "flyway-core" % "12.9.0",
-      "org.flywaydb" % "flyway-database-postgresql" % "12.9.0",
-      "org.postgresql" % "postgresql" % "42.7.11",
-      "com.zaxxer" % "HikariCP" % "7.1.0"
+      "io.minio" % "minio" % "8.5.12"
     )
   )
 
@@ -76,11 +73,14 @@ lazy val sparkJob = (project in file("processing/spark-job"))
       "org.slf4j"      % "slf4j-api"       % "2.0.18",
       "ch.qos.logback" % "logback-classic" % "1.5.34",
       "org.postgresql" % "postgresql" % "42.7.11",
+      "org.flywaydb" % "flyway-core" % "9.22.3",
       // spark to docker with cluster run
       "org.apache.spark" %% "spark-core" % "3.5.0" % "provided",
       "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided",
       // spark to local run
 //      "org.apache.spark" %% "spark-core" % "3.5.0",
 //      "org.apache.spark" %% "spark-sql" % "3.5.0",
+      "io.delta" %% "delta-spark" % "3.2.1",
+      "org.apache.hadoop" % "hadoop-aws" % "3.3.4"
     )
   )

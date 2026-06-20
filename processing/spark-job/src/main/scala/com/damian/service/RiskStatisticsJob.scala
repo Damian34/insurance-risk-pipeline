@@ -3,21 +3,26 @@ package com.damian.service
 import com.damian.config.properties.DatabaseProperties
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
 import org.slf4j.LoggerFactory
 
 import java.sql.DriverManager
 
-class RiskStatisticsJob(dbProperties: DatabaseProperties, calculator: StatisticsCalculator) {
-  private val log = LoggerFactory.getLogger(getClass)
-  
-  def execute(spark: SparkSession): Unit = {
-    val records: DataFrame = spark.read.jdbc(
-      dbProperties.jdbcUrl,
-      "insurance_records",
-      dbProperties.connectionProperties
-    )
+class RiskStatisticsJob(
+                          dbProperties: DatabaseProperties,
+                          calculator: StatisticsCalculator,
+                          rawDataPath: String
+                        ) {
 
-    val prepared = records
+  private val log = LoggerFactory.getLogger(getClass)
+
+  def execute(spark: SparkSession): Unit = {
+    val events = readRawEvents(spark)
+    val records = events
+      .withColumn("incident_date", col("incident_date").cast("date"))
+    val latestRecords = latestOccurred(records)
+
+    val prepared = latestRecords
       .withColumn("segment_value", calculator.concatAgeBucket())
       .withColumn("calculation_month", calculator.calculationMonth())
 
@@ -26,7 +31,7 @@ class RiskStatisticsJob(dbProperties: DatabaseProperties, calculator: Statistics
 
     log.info("=== END AGE_BUCKET Processing ===")
 
-    val regionPrepared = records
+    val regionPrepared = latestRecords
       .withColumn("segment_value", col("incident_state"))
       .withColumn("calculation_month", calculator.calculationMonth())
 
@@ -36,10 +41,27 @@ class RiskStatisticsJob(dbProperties: DatabaseProperties, calculator: Statistics
     log.info("=== END REGION Processing ===")
 
     val result = ageStats.unionByName(regionStats)
+
     upsertStatisticsToDatabase(result)
   }
 
-  private def stagingStatistics(dataFrame: DataFrame): Unit = {
+  /** Reads NDJSON from MinIO */
+  private def readRawEvents(spark: SparkSession): DataFrame = {
+    log.info(s"Reading raw events from: $rawDataPath")
+    spark.read.json(rawDataPath)
+  }
+
+  /** Keep only latest event per policy_id */
+  private def latestOccurred(df: DataFrame): DataFrame = {
+    val window = Window.partitionBy("policy_id").orderBy(col("occurred_at").desc)
+
+    df.withColumn("rn", row_number().over(window))
+      .filter(col("rn") === 1)
+      .drop("rn")
+  }
+
+  /** UPSERT via staging + Postgres ON CONFLICT */
+  private def upsertStatisticsToDatabase(dataFrame: DataFrame): Unit = {
     val stagingTable = "risk_statistics_staging"
     dataFrame.write
       .mode("overwrite")
@@ -48,10 +70,7 @@ class RiskStatisticsJob(dbProperties: DatabaseProperties, calculator: Statistics
         stagingTable,
         dbProperties.connectionProperties
       )
-  }
 
-  private def upsertStatisticsToDatabase(dataFrame: DataFrame): Unit = {
-    stagingStatistics(dataFrame)
     val sql =
       """
         |INSERT INTO risk_statistics (

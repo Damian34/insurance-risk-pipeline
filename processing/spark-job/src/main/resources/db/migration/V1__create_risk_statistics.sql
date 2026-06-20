@@ -9,6 +9,7 @@ CREATE TABLE risk_statistics (
     avg_policy_premium NUMERIC(18,2),
     median_claim_cost NUMERIC(18,2),
     median_total_claim_cost NUMERIC(18,2),
+    avg_severity_score NUMERIC(10,4),
     loss_ratio NUMERIC(10,4),
     fraud_rate NUMERIC(10,4),
     risk_index NUMERIC(10,4),
