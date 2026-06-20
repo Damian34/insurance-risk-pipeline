@@ -75,13 +75,12 @@ lazy val sparkJob = (project in file("processing/spark-job"))
       "ch.qos.logback" % "logback-classic" % "1.5.34",
       "org.postgresql" % "postgresql" % "42.7.11",
       "org.flywaydb" % "flyway-core" % "9.22.3",
+      "org.apache.hadoop" % "hadoop-aws" % "3.3.4",
       // spark to docker with cluster run
       "org.apache.spark" %% "spark-core" % "3.5.0" % "provided",
       "org.apache.spark" %% "spark-sql"  % "3.5.0" % "provided",
       // spark to local run
 //      "org.apache.spark" %% "spark-core" % "3.5.0",
 //      "org.apache.spark" %% "spark-sql" % "3.5.0",
-      "io.delta" %% "delta-spark" % "3.2.1",
-      "org.apache.hadoop" % "hadoop-aws" % "3.3.4"
     )
   )

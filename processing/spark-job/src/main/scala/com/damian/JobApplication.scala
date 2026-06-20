@@ -45,9 +45,6 @@ object JobApplication {
       .master(sparkProperties.url)
       //.master("local[*]")
       //.master("spark://spark-master:7077")
-      // Delta Lake
-      .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-      .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
       // MinIO / S3A
       .config("spark.hadoop.fs.s3a.endpoint", minioProperties.endpoint)
       .config("spark.hadoop.fs.s3a.path.style.access", "true")
@@ -93,7 +90,7 @@ object JobApplication {
     val job = new RiskStatisticsJob(
       dbProperties,
       calculator,
-      rawDataPath = s"s3a://${minioProperties.bucket}"
+      rawDataPath = s"s3a://${minioProperties.bucket}/"
     )
     job.execute(spark)
   }
