@@ -2,13 +2,16 @@ networks:
   api-network:
 
 volumes:
-  rabbitmq_data:
   generator_data:
+  rabbitmq_data:
+  insurance_db:
+  minio_data:
+  superset_home:
 
 services:
-  insurance-data-generator:
-    build: ./insurance-data-generator
-    container_name: insurance-data-generator
+  data-generator:
+    build: ./data-generator
+    container_name: data-generator
     restart: always
     ports:
       - "8080:8080"
@@ -24,6 +27,113 @@ services:
       - api-network
     volumes:
       - generator_data:/app/data
+
+  ingest-api:
+    build: ./processing/ingest-api
+    container_name: ingest-api
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: admin
+      RABBITMQ_PASSWORD: admin
+      MINO_ENDPOINT: http://minio:9000
+      MINO_USERNAME: minioadmin
+      MINO_PASSWORD: minioadmin
+      MINO_BUCKET: raw-data
+    networks:
+      - api-network
+
+  spark-job:
+    image: apache/spark:3.5.0
+    depends_on:
+      - spark-master
+      - spark-worker
+      - insurance-db
+      - minio
+    environment:
+      SPARK_URL: spark-master:7077
+      SPARK_SCHEDULER_ENABLE: false
+      SPARK_SCHEDULER_INTERVAL: 20 #min
+      POSTGRES_URL: jdbc:postgresql://insurance-db:5432/insurance-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      MINO_ENDPOINT: http://minio:9000
+      MINO_USERNAME: minioadmin
+      MINO_PASSWORD: minioadmin
+      MINO_BUCKET: raw-data
+    volumes:
+      - ./processing/spark-job/target/scala-2.12/app.jar:/app/app.jar
+    command: >
+      bash -c "
+      /opt/spark/bin/spark-submit
+      --class com.damian.JobApplication
+      --master spark://spark-master:7077
+      /app/app.jar
+      "
+    networks:
+      - api-network
+
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MODE: master
+    ports:
+      - "8090:8080"  # Spark UI
+      - "7077:7077"  # Spark master port
+    networks:
+      - api-network
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: spark-worker
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - api-network
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done;
+      mc mb -p local/raw-data || true;
+      mc ls local;
+      exit 0;
+      "
+    networks:
+      - api-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - api-network
 
   rabbitmq:
     image: rabbitmq:4.3.2-management
@@ -45,3 +155,52 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  insurance-db:
+    image: postgres:18.0-alpine
+    container_name: insurance-db
+    restart: always
+    environment:
+      POSTGRES_DB: insurance-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - api-network
+    volumes:
+      - insurance_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insurance-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  superset:
+    build: ./superset
+    container_name: superset
+    restart: always
+    depends_on:
+      insurance-db:
+        condition: service_healthy
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: supersecretkey
+    networks:
+      - api-network
+    volumes:
+      - superset_home:/app/superset_home
+    command: >
+      /bin/sh -c "
+      superset db upgrade &&
+      superset fab create-admin
+      --username admin
+      --firstname Admin
+      --lastname User
+      --email admin@admin.com
+      --password admin &&
+      superset init &&
+      superset set-database-uri -d insurance-db -u postgresql://postgres:postgres@insurance-db:5432/insurance-db &&
+      superset run -h 0.0.0.0 -p 8088
+      "

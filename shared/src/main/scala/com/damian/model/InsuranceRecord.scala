@@ -1,5 +1,7 @@
 package com.damian.model
 
+import java.time.LocalDate
+
 case class InsuranceRecord(
                             policyId: String,
                             policyState: String,
@@ -10,7 +12,7 @@ case class InsuranceRecord(
                             insuredEducationLevel: String,
                             insuredOccupation: String,
                             insuredHobbies: String,
-                            incidentDate: String,
+                            incidentDate: LocalDate,
                             incidentType: String,
                             collisionType: String,
                             incidentSeverity: String,
@@ -39,7 +41,7 @@ object InsuranceRecord:
       insuredEducationLevel   = row("insured_education_level"),
       insuredOccupation       = row("insured_occupation"),
       insuredHobbies          = row("insured_hobbies"),
-      incidentDate            = row("incident_date"),
+      incidentDate            = LocalDate.parse(row("incident_date")),
       incidentType            = row("incident_type"),
       collisionType           = row("collision_type"),
       incidentSeverity        = row("incident_severity"),

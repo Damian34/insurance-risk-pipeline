@@ -11,7 +11,7 @@ import scala.util.Using
 
 class DatasetDownloader {
   /**
-   * https://www.kaggle.com/datasets/ahluwaliasaksham/car-insurance-fraud-detection-dataset?utm_source=chatgpt.com
+   * https://www.kaggle.com/datasets/ahluwaliasaksham/car-insurance-fraud-detection-dataset
    */
   private val log = LoggerFactory.getLogger(getClass)
   private val DATA_SET = "ahluwaliasaksham/car-insurance-fraud-detection-dataset"

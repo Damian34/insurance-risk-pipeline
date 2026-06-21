@@ -5,6 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import com.damian.api.GeneratorController
 import com.damian.config.RabbitConfig
+import com.damian.config.properties.RabbitProperties
 import com.damian.messaging.InsuranceRecordProducer
 import com.damian.service.{DatasetDownloader, InsuranceDataGenerator}
 import com.typesafe.config.ConfigFactory
@@ -15,7 +16,7 @@ import com.typesafe.config.ConfigFactory
   val config = ConfigFactory.load()
   val host = config.getString("server.host")
   val port = config.getInt("server.port")
-  val rabbitConfig = RabbitConfig(config)
+  val rabbitConfig = RabbitConfig(properties=RabbitProperties(config))
 
   val downloader = DatasetDownloader()
   val producer = InsuranceRecordProducer(rabbitConfig)

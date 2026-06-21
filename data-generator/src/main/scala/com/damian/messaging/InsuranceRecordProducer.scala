@@ -13,7 +13,7 @@ class InsuranceRecordProducer(rabbitConfig: RabbitConfig) {
   def produce(record: InsuranceRecord): Unit = {
     val event = InsuranceRecordCreatedEvent.of(record)
     val json = event.asJson.noSpaces
-    channel.basicPublish("", QueueTopic.InsuranceRecordCreated, RabbitProperties.basicProperties, json.getBytes("UTF-8"))
+    channel.basicPublish("", QueueTopic.InsuranceRecordCreated, RabbitMessageProperties.basicProperties, json.getBytes("UTF-8"))
     log.info(s"Published event: ${event.eventId} for policy: ${record.policyId}")
   }
 }

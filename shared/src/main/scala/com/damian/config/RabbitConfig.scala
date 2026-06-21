@@ -1,17 +1,17 @@
 package com.damian.config
 
+import com.damian.config.properties.RabbitProperties
 import com.damian.messaging.QueueTopic
 import com.rabbitmq.client.{Channel, Connection, ConnectionFactory}
-import com.typesafe.config.Config
 
 import scala.util.Using
 
-class RabbitConfig(config: Config) {
+class RabbitConfig(properties: RabbitProperties) {
   private val factory = ConnectionFactory()
-  factory.setHost(config.getString("rabbitmq.host"))
-  factory.setPort(config.getInt("rabbitmq.port"))
-  factory.setUsername(config.getString("rabbitmq.username"))
-  factory.setPassword(config.getString("rabbitmq.password"))
+  factory.setHost(properties.host)
+  factory.setPort(properties.port)
+  factory.setUsername(properties.userName)
+  factory.setPassword(properties.password)
 
   private val connection: Connection = factory.newConnection()
   declareQueues()
