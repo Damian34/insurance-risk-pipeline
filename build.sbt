@@ -14,7 +14,7 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 }
 
 lazy val root = (project in file("."))
-  .aggregate(shared, generator, processingApi, sparkJob)
+  .aggregate(shared, generator, ingestApi, sparkJob)
 
 lazy val shared = (project in file("shared"))
   .settings(
@@ -45,11 +45,11 @@ lazy val generator = (project in file("data-generator"))
     )
   )
 
-lazy val processingApi = (project in file("processing/api"))
+lazy val ingestApi = (project in file("processing/ingest-api"))
   .dependsOn(shared)
   .enablePlugins(AssemblyPlugin)
   .settings(
-    name := "processing-api",
+    name := "ingest-api",
     assembly / mainClass    := Some("com.damian.run"),
     assembly / assemblyJarName := "app.jar",
     libraryDependencies ++= Seq(

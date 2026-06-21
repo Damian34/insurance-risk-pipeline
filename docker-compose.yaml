@@ -28,9 +28,9 @@ services:
     volumes:
       - generator_data:/app/data
 
-  processing-api:
-    build: ./processing/api
-    container_name: processing-api
+  ingest-api:
+    build: ./processing/ingest-api
+    container_name: ingest-api
     restart: always
     ports:
       - "8081:8081"
@@ -113,7 +113,6 @@ services:
       /bin/sh -c "
       until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done;
       mc mb -p local/raw-data || true;
-      mc mb -p local/delta || true;
       mc ls local;
       exit 0;
       "

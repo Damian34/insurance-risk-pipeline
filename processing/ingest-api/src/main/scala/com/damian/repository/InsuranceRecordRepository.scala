@@ -49,5 +49,5 @@ class InsuranceRecordRepository(properties: MinioProperties) {
     JsonSnakeCase.transformKeys(json).noSpaces
 
   private def generateFileName(): String =
-    s"insurance-record-${Instant.now()}-${UUID.randomUUID()}.json"
+    s"insurance-records-${Instant.now()}-${UUID.randomUUID()}.json"
 }
