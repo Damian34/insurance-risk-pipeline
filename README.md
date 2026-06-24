@@ -1,8 +1,9 @@
 # Insurance Risk Pipeline
 
-A data engineering pipeline simulating a real-world insurance risk assessment system. 
-It demonstrates an end-to-end flow from event-driven data ingestion through 
-distributed processing to risk analytics.
+The project demonstrates an end-to-end insurance risk processing pipeline 
+that transforms raw insurance records into segmented risk statistics. 
+The resulting metrics can be used for reporting, analytics, and risk assessment, 
+supporting both automated and manual decision-making.
 
 ## Stack
 - Scala 3 / 2 (on JDK 17)
@@ -52,7 +53,7 @@ flowchart LR
 sbt assembly
 ```
 
-### Start the stack
+### Start with Docker
 ```bash
 docker-compose up -d --build
 ```
@@ -64,10 +65,10 @@ credentials: \
 username: minioadmin \
 password: minioadmin
 
-### Apache Superset & risk statistics dashboard
+### Apache Superset & dashboard
 
 can enter with http://localhost:8088/ \
 credentials: \
 username: admin \
-password: admin \
+password: admin
 
