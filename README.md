@@ -5,13 +5,26 @@ that transforms raw insurance records into segmented risk statistics.
 The resulting metrics can be used for reporting, analytics, and risk assessment, 
 supporting both automated and manual decision-making.
 
+## Example: Risk Analysis Output
+
+![Risk Index Trends by Age Group](docs/images/risk-index-age-group.png)
+
+The chart presents monthly risk index trends across insured age groups, calculated from aggregated insurance claim data.
+
+The custom risk index combines:
+- loss ratio
+- fraud rate
+- claim severity
+
+SQL: [risk-index-age-group.sql](docs/queries/risk-index-age-group.sql)
+
 ## Stack
-- Scala 3 / 2 (on JDK 17)
+- Scala 3 / Scala 2.12 (Spark job), on JDK 17
 - RabbitMQ
 - PostgreSQL
 - Akka HTTP/Streams
 - Apache Spark
-- Apache Superset
+- Grafana
 - Minio / S3
 
 ### How it works
@@ -39,8 +52,8 @@ flowchart LR
 3. Spark job reads raw events and computes risk statistics that:
    - can be used for system or human decision-making
    - can run as a single job or on a schedule
-4. Results are stored in PostgreSQL
-5. Apache Superset to displays a statistics in dashboard
+4. Results are stored in PostgreSQL.
+5. Grafana is used to visualize calculated risk statistics.
 
 ## How to run
 ### Prerequisites
@@ -59,15 +72,13 @@ docker-compose up -d --build
 ```
 
 ### MinIO raw & events storage
-
-can enter with http://localhost:9001 \
+Access at: http://localhost:9001 \
 credentials: \
 username: minioadmin \
 password: minioadmin
 
-### Apache Superset & dashboard
-
-can enter with http://localhost:8088/ \
+### Grafana dashboard
+Access at: http://localhost:3000/ \
 credentials: \
 username: admin \
 password: admin

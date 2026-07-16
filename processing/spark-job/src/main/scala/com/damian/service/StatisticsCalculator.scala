@@ -47,12 +47,14 @@ class StatisticsCalculator {
   }
 
   def concatAgeBucket(): Column = {
-      val step = 10
-      concat(
-        (floor(col("insured_age") / step) * step).cast("int").cast("string"),
-        lit("_"),
-        (floor(col("insured_age") / step) * step + step - 1).cast("int").cast("string")
-      )
+    val age = col("insured_age")
+
+    when(age.between(18, 24), "18-24")
+      .when(age.between(25, 34), "25-34")
+      .when(age.between(35, 44), "35-44")
+      .when(age.between(45, 54), "45-54")
+      .when(age.between(55, 64), "55-64")
+      .otherwise("65+")
   }
 
   def calculationMonth(): Column = date_format(col("incident_date"), "yyyy-MM")

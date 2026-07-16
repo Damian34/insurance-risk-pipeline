@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: insurance-db
+    type: postgres
+    access: proxy
+    url: insurance-db:5432
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      database: insurance-db
+      sslmode: disable
+      postgresVersion: 1800
+    isDefault: true

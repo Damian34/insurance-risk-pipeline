@@ -6,7 +6,7 @@ volumes:
   rabbitmq_data:
   insurance_db:
   minio_data:
-  superset_home:
+  grafana_data:
 
 services:
   data-generator:
@@ -176,31 +176,20 @@ services:
       timeout: 5s
       retries: 5
 
-  superset:
-    build: ./superset
-    container_name: superset
+  grafana:
+    image: grafana/grafana-oss:13.0.2
+    container_name: grafana
     restart: always
     depends_on:
       insurance-db:
         condition: service_healthy
     ports:
-      - "8088:8088"
+      - "3000:3000"
     environment:
-      SUPERSET_SECRET_KEY: supersecretkey
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     networks:
       - api-network
-    volumes:
-      - superset_home:/app/superset_home
-    command: >
-      /bin/sh -c "
-      superset db upgrade &&
-      superset fab create-admin
-      --username admin
-      --firstname Admin
-      --lastname User
-      --email admin@admin.com
-      --password admin &&
-      superset init &&
-      superset set-database-uri -d insurance-db -u postgresql://postgres:postgres@insurance-db:5432/insurance-db &&
-      superset run -h 0.0.0.0 -p 8088
-      "
